@@ -1,6 +1,6 @@
 gen_sample
 gen_sig
 matcher
-samp.fastq
-sig.fasta
+*.fastq
+*.fasta
 
