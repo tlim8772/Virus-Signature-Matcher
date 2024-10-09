@@ -25,3 +25,6 @@ $(OUTPUT_GEN_SIG): gen_sig.cc
 
 clean:
 	rm -f $(OUTPUT_GEN) $(OUTPUT_GEN_SIG) $(OUTPUT_GPU)
+
+helper:
+	$(NVCC) -arch=native helpers.cu -o helpers
