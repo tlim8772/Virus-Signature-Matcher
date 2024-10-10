@@ -1,1 +1,3 @@
-if you compile on a100-80, and run on h100-96, you will get errors. Likewise for the other way round
+if you compile on a100-80, and run on h100-96 (and vice versa), you will get errors.
+testM: test match
+testMS test match_score

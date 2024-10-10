@@ -5,4 +5,5 @@ matcher
 *.fasta
 test.cu
 helpers
+test_helper
 
