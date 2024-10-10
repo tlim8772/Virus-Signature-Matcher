@@ -1,4 +1,7 @@
 #include "helpers.cu"
+#include <chrono>
+
+using namespace std;
 
 void test_match() {
     int n;
@@ -51,7 +54,7 @@ void test_match_score() {
         cudaMallocManaged(&res, sizeof(double));
         cudaMemcpy(phread_33, s.data(), sizeof(char) * s.size(), cudaMemcpyHostToDevice);
 
-        //or (int i = 0; i < s.size(); i ++) phread_33[i] = s[i];
+        //for (int i = 0; i < s.size(); i ++) phread_33[i] = s[i];
         *res = 0.0;
 
         int NUM_BLOCKS = (len_virus + BLOCK_SIZE) / BLOCK_SIZE;
@@ -63,6 +66,6 @@ void test_match_score() {
 }
 
 int main() {
-    //test_match();
-    test_match_score();
+    test_match();
+    //test_match_score();
 }

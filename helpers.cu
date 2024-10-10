@@ -3,10 +3,9 @@
 #include <cuda_runtime.h>
 #include <chrono>
 
-#define BLOCK_SIZE 128
+#define BLOCK_SIZE 256
 #define INVALID 999999
 
-using namespace std;
 
 
 // len is the actual length of the string, and does not include the null character at the end
@@ -43,13 +42,12 @@ __global__ void match(char* sample, char* virus, int len_sample, int len_virus, 
 
 // get the match score
 // idx (of sample) is where the pattern is found to match
-__global__ void match_score(char* phread_33, int len_virus, int idx, double* res) {
+__global__ void match_score(char* phread33, int len_virus, int idx, double* res) {
     int tid = blockIdx.x * blockDim.x + threadIdx.x;
     __shared__ double accu[BLOCK_SIZE];
-
-    accu[threadIdx.x] = (tid >= len_virus) ? 0.0 : (phread_33[idx + tid] - 33) / (double) len_virus;
     
-
+    accu[threadIdx.x] = (tid >= len_virus) ? 0.0 : (phread33[idx + tid] - 33) / (double) len_virus;
+    
     for (int i = 2; i <= BLOCK_SIZE; i <<= 1) {
         __syncthreads();
         // if threadIdx.x is a multiple of i

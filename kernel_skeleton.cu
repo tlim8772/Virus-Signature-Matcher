@@ -1,7 +1,7 @@
 #include "kseq/kseq.h"
 #include "common.h"
 #include "helpers.cu"
-using namespace std;
+
 #define MAX_LEN_SAMP 2200
 #define MAX_LEN_SIG 1000
 #define MAX 2200000
@@ -39,20 +39,17 @@ void allocMem(const std::vector<klibpp::KSeq>& samples, const std::vector<klibpp
         cudaMalloc(&sigs[i], sizeof(char) * signatures[i].seq.size());
     }
 
-    // alloc matchIdxs and set to 999999
-    cudaMallocManaged(&matchIdxs, sizeof(int*) * MAX);
-    for (int i = 0; i < MAX; i ++) {
-        matchIdxs[i] = INVALID;
-    }
+    // alloc matchIdxs
+    cudaMallocManaged(&matchIdxs, sizeof(int) * MAX);
+    for (int i = 0; i < MAX; i ++) matchIdxs[i] = 999999;
+
+    // alloc score
+    cudaMallocManaged(&scores, sizeof(double) * MAX);
+    for (int i = 0; i < MAX; i ++) scores[i] = 0.0;
     
-    // alloc score and set to 0
-    cudaMallocManaged(&scores, sizeof(double*) * MAX);
-    for (int i = 0; i < MAX; i ++) {
-        scores[i] = 0.0;
-    }
     // init streams
     for (int i = 0; i < NUM_STREAMS; i ++) {
-        cudaStreamCreate(&streams[i]);
+        //cudaStreamCreate(&streams[i]);
     }
 }
 
@@ -67,36 +64,36 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
     allocMem(samples, signatures);
     
     for (int i = 0; i < ROWS; i ++) {
-        int sid = i & (NUM_STREAMS - 1);
-        cudaMemcpyAsync(samps[i], samples[i].seq.data(), samples[i].seq.size() * sizeof(char), cudaMemcpyHostToDevice, streams[sid]);
+        //int sid = i & (NUM_STREAMS - 1);
+        cudaMemcpy(samps[i], samples[i].seq.data(), samples[i].seq.size() * sizeof(char), cudaMemcpyHostToDevice);
     }
     for (int j = 0; j < COLS; j ++) {
         int sid = j & (NUM_STREAMS - 1);
-        cudaMemcpyAsync(sigs[j], signatures[j].seq.data(), signatures[j].seq.size() * sizeof(char), cudaMemcpyHostToDevice, streams[sid]);
+        cudaMemcpy(sigs[j], signatures[j].seq.data(), signatures[j].seq.size() * sizeof(char), cudaMemcpyHostToDevice);
     }
     
-    syncStreams();
+    //syncStreams();
     
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
             int idx = i * ROWS + j;
-            int streamId = idx & (NUM_STREAMS - 1); // take idx % 32
+            //int sid = idx & (NUM_STREAMS - 1); // take idx % 32
             int sampLen = samples[i].seq.size();
             int sigLen = signatures[j].seq.size();
             int numBlocks = (sampLen + BLOCK_SIZE) / BLOCK_SIZE;
             
-            match<<<numBlocks, BLOCK_SIZE, 0, streams[streamId]>>>(samps[i], sigs[j], sampLen, sigLen, &matchIdxs[idx]);
+            match<<<numBlocks, BLOCK_SIZE>>>(samps[i], sigs[j], sampLen, sigLen, &matchIdxs[idx]);
         }
     }
 
-    syncStreams();
+    //syncStreams();
     cudaDeviceSynchronize();
 
     bool copied[MAX] = {false};
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
             int idx = i * ROWS + j;
-            int sid = idx & (NUM_STREAMS - 1); // take idx % 32
+            //int sid = idx & (NUM_STREAMS - 1); // take idx % 32
 
             // if pattern is found
             if (matchIdxs[idx] < INVALID) {
@@ -105,15 +102,15 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
 
                 if (!copied[i]) {
                     copied[i] = true;
-                    cudaMemcpyAsync(phread33[i], samples[i].qual.data(), samples[i].qual.size() * sizeof(char), cudaMemcpyHostToDevice, streams[sid]);
+                    cudaMemcpy(phread33[i], samples[i].qual.data(), samples[i].qual.size() * sizeof(char), cudaMemcpyHostToDevice);
                 }
                 
-                match_score<<<numBlocks, BLOCK_SIZE, 0, streams[sid]>>>(phread33[i], sigLen, matchIdxs[idx], &scores[idx]);
+                match_score<<<numBlocks, BLOCK_SIZE>>>(phread33[i], sigLen, matchIdxs[idx], &scores[idx]);
             }
         }
     }
 
-    syncStreams();
+    //syncStreams();
     cudaDeviceSynchronize();
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
