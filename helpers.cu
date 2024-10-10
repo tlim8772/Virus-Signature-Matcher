@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 #include <chrono>
 
-#define BLOCK_SIZE 512
+#define BLOCK_SIZE 128
 #define INVALID 999999
 
 using namespace std;
@@ -26,14 +26,16 @@ __global__ void match(char* sample, char* virus, int len_sample, int len_virus, 
         }
         matched[threadIdx.x] = (i == len_virus) ? tid : INVALID;
     }
-
+    
+    
     // get the min of all idx of sample that has a match with virus
     for (int i = 2; i <= BLOCK_SIZE; i <<= 1) {
+        __syncthreads();
         // if threadIdx.x is a multiple of i
         if (!(threadIdx.x & (i - 1))) {
             matched[threadIdx.x] = min(matched[threadIdx.x], matched[threadIdx.x + (i >> 1)]);
         }
-        __syncthreads();
+        
     }
     if (!threadIdx.x) atomicMin(res, matched[0]);
 
@@ -46,13 +48,15 @@ __global__ void match_score(char* phread_33, int len_virus, int idx, double* res
     __shared__ double accu[BLOCK_SIZE];
 
     accu[threadIdx.x] = (tid >= len_virus) ? 0.0 : (phread_33[idx + tid] - 33) / (double) len_virus;
+    
 
     for (int i = 2; i <= BLOCK_SIZE; i <<= 1) {
+        __syncthreads();
         // if threadIdx.x is a multiple of i
         if (!(threadIdx.x & (i - 1))) {
             accu[threadIdx.x] += accu[threadIdx.x + (i >> 1)];
         }
-        __syncthreads();
+       
     }
     
     if (!threadIdx.x) atomicAdd(res, accu[0]);

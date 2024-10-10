@@ -6,4 +6,6 @@ matcher
 test.cu
 helpers
 test_helper
-
+debug_matcher
+out
+res

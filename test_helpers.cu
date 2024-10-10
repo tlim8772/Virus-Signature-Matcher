@@ -63,6 +63,6 @@ void test_match_score() {
 }
 
 int main() {
-    test_match();
-    //test_match_score();
+    //test_match();
+    test_match_score();
 }

@@ -5,7 +5,7 @@ using namespace std;
 #define MAX_LEN_SAMP 2200
 #define MAX_LEN_SIG 1000
 #define MAX 2200000
-#define NUM_STREAMS 16
+#define NUM_STREAMS 32
 
 cudaStream_t streams[NUM_STREAMS];
 
@@ -92,7 +92,7 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
     syncStreams();
     cudaDeviceSynchronize();
 
-    bool copied[MAX];
+    bool copied[MAX] = {false};
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
             int idx = i * ROWS + j;
