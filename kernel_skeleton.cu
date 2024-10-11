@@ -1,6 +1,8 @@
 #include "kseq/kseq.h"
 #include "common.h"
 #include "helpers.cu"
+#include "timer.cu"
+#include <iostream>
 
 #define MAX_LEN_SAMP 2200
 #define MAX_LEN_SIG 1000
@@ -49,7 +51,7 @@ void allocMem(const std::vector<klibpp::KSeq>& samples, const std::vector<klibpp
     
     // init streams
     for (int i = 0; i < NUM_STREAMS; i ++) {
-        //cudaStreamCreate(&streams[i]);
+        cudaStreamCreate(&streams[i]);
     }
 }
 
@@ -60,15 +62,15 @@ void syncStreams() {
 
 void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klibpp::KSeq>& signatures, std::vector<MatchResult>& matches) {
    
-    
     allocMem(samples, signatures);
     
+   
     for (int i = 0; i < ROWS; i ++) {
         //int sid = i & (NUM_STREAMS - 1);
         cudaMemcpy(samps[i], samples[i].seq.data(), samples[i].seq.size() * sizeof(char), cudaMemcpyHostToDevice);
     }
     for (int j = 0; j < COLS; j ++) {
-        int sid = j & (NUM_STREAMS - 1);
+        //int sid = j & (NUM_STREAMS - 1);
         cudaMemcpy(sigs[j], signatures[j].seq.data(), signatures[j].seq.size() * sizeof(char), cudaMemcpyHostToDevice);
     }
     
@@ -77,19 +79,19 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
             int idx = i * ROWS + j;
-            //int sid = idx & (NUM_STREAMS - 1); // take idx % 32
+            int sid = idx & (NUM_STREAMS - 1); // take idx % 32
             int sampLen = samples[i].seq.size();
             int sigLen = signatures[j].seq.size();
             int numBlocks = (sampLen + BLOCK_SIZE) / BLOCK_SIZE;
             
-            match<<<numBlocks, BLOCK_SIZE>>>(samps[i], sigs[j], sampLen, sigLen, &matchIdxs[idx]);
+            match<<<numBlocks, BLOCK_SIZE, 0, streams[sid]>>>(samps[i], sigs[j], sampLen, sigLen, &matchIdxs[idx]);
         }
     }
 
-    //syncStreams();
+    syncStreams();
     cudaDeviceSynchronize();
 
-    bool copied[MAX] = {false};
+    bool copied[ROWS] = {false};
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
             int idx = i * ROWS + j;

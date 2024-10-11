@@ -9,4 +9,5 @@ test_helper
 debug_matcher
 out
 tests
+test.cc
 

@@ -1,3 +1,5 @@
 if you compile on a100-80, and run on h100-96 (and vice versa), you will get errors.
-testM: test match
+testM: test match. test 3 is the worst case scenario of O(mn) time complexity. You can see the diff if you run on 1 thread vs many threads
 testMS test match_score
+
+i tested, and copying the data form host to device is not the bottleneck

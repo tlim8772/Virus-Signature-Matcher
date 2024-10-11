@@ -8,6 +8,12 @@ struct Timer {
         cudaEventCreate(&end);
     }
 
+    ~Timer() {
+        cudaEventDestroy(begin);
+        cudaEventDestroy(end);
+    }
+
+
     void start() {
         cudaEventRecord(begin);
     }
@@ -19,7 +25,7 @@ struct Timer {
     std::string time() {
         float milliseconds = 0;
         cudaEventElapsedTime(&milliseconds, begin, end);
-        return std::to_string(milliseconds);
+        return std::to_string(milliseconds / 1000);
     }
 
 };

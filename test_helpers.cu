@@ -65,7 +65,39 @@ void test_match_score() {
     }
 }
 
+void test_f() {
+    int n;
+    cin >> n;
+    for (int i = 0; i < n; i ++) {
+        string s, v;
+        cin >> s >> v;
+
+        char *sample;
+        char *virus;
+        int *res;
+
+        cudaMalloc(&sample, sizeof(char) * s.size());
+        cudaMalloc(&virus, sizeof(char) * v.size());
+        cudaMallocManaged(&res, sizeof(int));
+
+        *res = 999999;
+        cudaMemcpy(sample, s.data(), s.size() * sizeof(char), cudaMemcpyHostToDevice);
+        cudaMemcpy(virus, v.data(), v.size() * sizeof(char), cudaMemcpyHostToDevice);
+
+        //auto start = chrono::high_resolution_clock::now();
+        
+        f<<<1, 1>>>(sample, virus, s.size(), v.size(), res);
+        cudaDeviceSynchronize();
+
+        //auto end = chrono::high_resolution_clock::now();
+        //auto seconds = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+        cout << (*res) << endl;
+        //cout << "time: " << seconds.count() << endl;
+
+    }
+}
 int main() {
-    test_match();
+    //test_match();
     //test_match_score();
+    test_f();
 }

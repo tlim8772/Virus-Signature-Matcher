@@ -59,3 +59,48 @@ __global__ void match_score(char* phread33, int len_virus, int idx, double* res)
     
     if (!threadIdx.x) atomicAdd(res, accu[0]);
 }
+
+// to test time taken for 1 thread only to do naive matching
+__global__ void f(char* samp, char* sig, int sampLen, int sigLen, int* res) {
+    
+    for (int i = 0; i <= sampLen - sigLen; i ++) {
+        int j = 0;
+        for (; j < sigLen; j ++) {
+            if (samp[i + j] != 'N' && sig[j] != 'N' && samp[i + j] != sig[j]) break;
+        }
+        if (j == sigLen) {
+            *res = i;
+            break;
+        }
+    }
+}
+
+__global__ void matcherKernel(char **samps, char **sigs, char **phread33s, int *sampLens, int *sigLens, int ROWS, int COLS, double *results) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    if (tid >= ROWS * COLS) return;
+
+    int r = tid / COLS;
+    int c = tid % COLS;
+    char *samp = samps[r];
+    char *sig = sigs[c];
+    int sampLen = sampLens[r];
+    int sigLen = sigLens[c];
+
+    int lim = sampLen - sigLen;
+    for (int i = 0; i <= lim; i ++) {
+        int j = 0;
+        for(; j < sigLen; j ++) {
+            if (samp[i + j] != 'N' && sig[j] != 'N' && samp[i + j] != sig[j]) break;
+        }
+        
+        // if we are successful, calculate the score
+        if (j == sigLen) {
+            char *phread33 = phread33s[r];
+            double score = 0;
+            for (int k = 0; k < sigLen; k ++) score += (phread33[i + k] - 33);
+            results[tid] = score / (double) sampLen;
+            return;
+        }
+    }
+    
+}
