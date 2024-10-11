@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 #include <chrono>
 
-#define BLOCK_SIZE 1024
+#define BLOCK_SIZE 256
 #define INVALID 999999
 
 

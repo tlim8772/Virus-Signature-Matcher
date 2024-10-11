@@ -3,3 +3,6 @@ testM: test match. test 3 is the worst case scenario of O(mn) time complexity. Y
 testMS test match_score
 
 i tested, and copying the data form host to device is not the bottleneck
+
+if you use unified memory (i.e use cudaMallocManaged) you must use cudaDeviceSynchronise() after kernel call, this is because kernels run asynchronouslu
+with respect to gpu

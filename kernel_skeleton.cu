@@ -67,6 +67,7 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
 
     int NUM_BLKS = (MAX + BLOCK_SIZE) / BLOCK_SIZE;
     matcherKernel<<<NUM_BLKS, BLOCK_SIZE>>>(samps, sigs, phread33, sampLens, sigLens, ROWS, COLS, scores);
+    cudaDeviceSynchronize();
     
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
