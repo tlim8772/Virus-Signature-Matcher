@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 #include <chrono>
 
-#define BLOCK_SIZE 256
+#define BLOCK_SIZE 1024
 #define INVALID 999999
 
 
@@ -96,9 +96,9 @@ __global__ void matcherKernel(char **samps, char **sigs, char **phread33s, int *
         // if we are successful, calculate the score
         if (j == sigLen) {
             char *phread33 = phread33s[r];
-            double score = 0;
+            int score = 0;
             for (int k = 0; k < sigLen; k ++) score += (phread33[i + k] - 33);
-            results[tid] = score / (double) sampLen;
+            results[tid] = score / (double) sigLen;
             return;
         }
     }
