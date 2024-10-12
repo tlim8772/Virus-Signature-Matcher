@@ -172,13 +172,4 @@ __global__ void combineBoth(char **samps, char **sigs, char **phread33s, int *sa
     
 
     if (threadIdx.x == 0) score[r * COLS + c] = store[0] / (double) sigLen;
-
-    /*if (threadIdx.x == 0) {
-        int midx = store[0];
-        int sum = 0;
-        for (int i = 0; i < sigLen; i ++) {
-            sum += (phread33[i + midx] - 33);
-        }
-        score[r * COLS + c] = sum / (double) sigLen;
-    }*/
 }

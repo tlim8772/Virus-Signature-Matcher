@@ -1,0 +1,2 @@
+alias a100="srun -G a100-40"
+alias h100="srun -G h100-96"
