@@ -6,3 +6,5 @@ i tested, and copying the data form host to device is not the bottleneck
 
 if you use unified memory (i.e use cudaMallocManaged) you must use cudaDeviceSynchronise() after kernel call, this is because kernels run asynchronouslu
 with respect to gpu
+
+Don't use unified memory on SoC compute cluster, it is MUCH slower. Do cudaMemcpy as much as possible

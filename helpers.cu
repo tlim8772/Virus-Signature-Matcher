@@ -3,7 +3,7 @@
 #include <cuda_runtime.h>
 #include <chrono>
 
-#define BLOCK_SIZE 256
+#define BLOCK_SIZE 128
 #define INVALID 999999
 
 
@@ -103,4 +103,82 @@ __global__ void matcherKernel(char **samps, char **sigs, char **phread33s, int *
         }
     }
     
+}
+
+
+// combine both methods
+// each pair gets a block, with has 128 threads to split up the work, so we have a 2d grid of blocks
+__global__ void combineBoth(char **samps, char **sigs, char **phread33s, int *sampLens, int *sigLens, int ROWS, int COLS, double *score) {
+    int r = blockIdx.x;
+    int c = blockIdx.y;
+    
+
+    char *samp = samps[r];
+    char *sig = sigs[c];
+    char *phread33 = phread33s[r];
+    int sampLen = sampLens[r];
+    int sigLen = sigLens[c];
+    int lim = sampLen - sigLen;
+
+    __shared__ int store[BLOCK_SIZE];
+    
+    store[threadIdx.x] = 999999;
+
+    __syncthreads();
+
+    for (int i = 0; i <= lim; i += BLOCK_SIZE) {
+        if (i + threadIdx.x > lim) continue;
+
+        int idx = i + threadIdx.x;
+        int j = 0;
+        for (;j < sigLen; j ++) {
+            if (samp[idx  + j] != 'N' && sig[j] != 'N' && samp[idx + j] != sig[j]) break;
+        }
+
+        if (j == sigLen) store[threadIdx.x] = min(store[threadIdx.x], idx);
+    }
+
+    // coalse the result
+    for (int i = 2; i <= BLOCK_SIZE; i <<= 1) {
+        __syncthreads();
+        
+        if (!(threadIdx.x & (i - 1))) {
+            store[threadIdx.x] = min(store[threadIdx.x], store[threadIdx.x + (i >> 1)]);
+        }
+       
+    }
+
+    __syncthreads();
+    if (store[0] == 999999) return;
+    
+   int matchIdx = store[0];
+    __syncthreads();
+
+    store[threadIdx.x] = 0;
+    __syncthreads();
+
+    for (int i = 0; i < sigLen; i += BLOCK_SIZE) {
+        store[threadIdx.x] += (i + threadIdx.x >= sigLen) ? 0 : (phread33[matchIdx + i + threadIdx.x] - 33);
+    }
+
+    for (int i = 2; i <= BLOCK_SIZE; i <<= 1) {
+        __syncthreads();
+        
+        if (!(threadIdx.x & (i - 1))) {
+            store[threadIdx.x] += store[threadIdx.x + (i >> 1)];
+        }
+       
+    }
+    
+
+    if (threadIdx.x == 0) score[r * COLS + c] = store[0] / (double) sigLen;
+
+    /*if (threadIdx.x == 0) {
+        int midx = store[0];
+        int sum = 0;
+        for (int i = 0; i < sigLen; i ++) {
+            sum += (phread33[i + midx] - 33);
+        }
+        score[r * COLS + c] = sum / (double) sigLen;
+    }*/
 }

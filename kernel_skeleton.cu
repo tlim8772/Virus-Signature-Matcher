@@ -8,7 +8,7 @@ char **samps, **dsamps;
 char **phread33, **dphread33;
 char **sigs, **dsigs;
 
-double *scores, *dscores;
+double *scores, *dscores; // stores the sum,in int. We get the average later
 int *sampLens, *dsampLens;
 int *sigLens, *dsigLens;
 
@@ -38,7 +38,6 @@ void allocMem(const std::vector<klibpp::KSeq>& samples, const std::vector<klibpp
         cudaMalloc(&samps[i], sizeof(char) * samples[i].seq.size());
     }
 
-    
     for (int i = 0; i < ROWS; i ++) {
         cudaMalloc(&phread33[i], sizeof(char) * samples[i].qual.size());
     }
@@ -86,15 +85,16 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
     cudaMemcpy(dsigLens, sigLens, sizeof(int) * COLS, cudaMemcpyHostToDevice);
     
 
-    int NUM_BLKS = (MAX + BLOCK_SIZE) / BLOCK_SIZE;
-    matcherKernel<<<NUM_BLKS, BLOCK_SIZE>>>(dsamps, dsigs, dphread33, dsampLens, dsigLens, ROWS, COLS, dscores);
+    dim3 grids = {(unsigned int) ROWS, (unsigned int) COLS, 1};
+    //dim3 blocks = {BLOCK_SIZE, 1, 1};
+    combineBoth<<<grids, BLOCK_SIZE>>>(dsamps, dsigs, dphread33, dsampLens, dsigLens, ROWS, COLS, dscores);
     cudaMemcpy(scores, dscores, sizeof(double) * MAX, cudaMemcpyDeviceToHost);
     //cudaDeviceSynchronize();
     
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {
             int idx = i * COLS + j;
-            if (scores[idx] > -0.000001) {
+            if (scores[idx] > -1) {
                 matches.push_back({samples[i].name, signatures[j].name, scores[idx]});
             }
         }
