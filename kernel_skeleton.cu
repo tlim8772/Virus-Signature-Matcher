@@ -17,17 +17,17 @@ int ROWS;
 int COLS;
 
 void allocMem(const std::vector<klibpp::KSeq>& samples, const std::vector<klibpp::KSeq>& signatures) {
-    samps = (char**) malloc(sizeof(char*) * ROWS);
-    phread33 = (char**) malloc(sizeof(char*) * ROWS);
-    sigs = (char**) malloc(sizeof(char*) * COLS);
+    samps = new char*[ROWS];
+    phread33 = new char*[ROWS];
+    sigs = new char*[COLS];
     
     cudaMalloc((void**)&dsamps, sizeof(char*) * ROWS);
     cudaMalloc((void**)&dphread33, sizeof(char*) * ROWS);
     cudaMalloc((void**)&dsigs, sizeof(char*) * COLS);
 
-    scores = (double*) malloc(sizeof(double) * MAX);
-    sampLens = (int*) malloc(sizeof(int) * ROWS);
-    sigLens = (int*) malloc(sizeof(int) * COLS);
+    scores = new double[MAX];
+    sampLens = new int[ROWS];
+    sigLens = new int[COLS];
 
     cudaMalloc(&dscores, sizeof(double) * MAX);
     cudaMalloc(&dsampLens, sizeof(int) * ROWS);
@@ -86,10 +86,8 @@ void runMatcher(const std::vector<klibpp::KSeq>& samples, const std::vector<klib
     
 
     dim3 grids = {(unsigned int) ROWS, (unsigned int) COLS, 1};
-    //dim3 blocks = {BLOCK_SIZE, 1, 1};
     combineBoth<<<grids, BLOCK_SIZE>>>(dsamps, dsigs, dphread33, dsampLens, dsigLens, ROWS, COLS, dscores);
     cudaMemcpy(scores, dscores, sizeof(double) * MAX, cudaMemcpyDeviceToHost);
-    //cudaDeviceSynchronize();
     
     for (int i = 0; i < ROWS; i ++) {
         for (int j = 0; j < COLS; j ++) {

@@ -1,8 +1,3 @@
-#include <bits/stdc++.h>
-#include <string.h>
-#include <cuda_runtime.h>
-#include <chrono>
-
 #define BLOCK_SIZE 128
 #define INVALID 999999
 
