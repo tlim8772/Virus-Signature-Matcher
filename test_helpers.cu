@@ -1,5 +1,7 @@
 #include "helpers.cu"
 #include <chrono>
+#include <iostream>
+#include <string>
 
 using namespace std;
 

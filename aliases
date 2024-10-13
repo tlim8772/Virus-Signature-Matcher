@@ -1,2 +1,5 @@
 alias a100="srun -G a100-40"
 alias h100="srun -G h100-96"
+
+alias a100-test="srun --ntasks 1 --cpus-per-task 1 --cpu_bind core --mem 20G --gpus a100-40 --constraint xgph"
+alias h100-test="srun --ntasks 1 --cpus-per-task 1 --cpu_bind core --mem 20G --gpus h100-96 --constraint xgpi"
