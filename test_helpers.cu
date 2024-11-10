@@ -99,7 +99,7 @@ void test_f() {
     }
 }
 int main() {
-    //test_match();
+    test_match();
     //test_match_score();
-    test_f();
+    //test_f();
 }

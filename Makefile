@@ -27,7 +27,7 @@ clean:
 	rm -f $(OUTPUT_GEN) $(OUTPUT_GEN_SIG) $(OUTPUT_GPU) test_helper 
 
 test_helper:
-	$(NVCC) -arch=native test_helpers.cu -o test_helper
+	$(NVCC) -g -G -arch=native test_helpers.cu -o test_helper
 
 # for debugging matcher with cuda-gdb
 debug_matcher:
