@@ -10,6 +10,5 @@ debug_matcher
 out
 tests
 test.cc
-testScript.sh
 a.out
 
