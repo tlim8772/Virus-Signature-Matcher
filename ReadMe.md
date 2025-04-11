@@ -8,3 +8,11 @@ if you use unified memory (i.e use cudaMallocManaged) you must use cudaDeviceSyn
 with respect to gpu
 
 Don't use unified memory on SoC compute cluster, it is MUCH slower. Do cudaMemcpy as much as possible
+
+compile matcher: `usr/local/bin/nvcc -arch=native -std=c++20 common.cc kernel_skeleton.cc -o matcher`
+
+compile gen_sample: `g++ gen_sample.cc -o gen_sample`
+
+compile gen_sig: `g++ gen_sig.cc -o gen_sig`
+
+to run: `./matcher t1.fastq t1.fastq`
