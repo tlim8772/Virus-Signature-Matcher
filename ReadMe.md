@@ -9,7 +9,7 @@ with respect to gpu
 
 Don't use unified memory on SoC compute cluster, it is MUCH slower. Do cudaMemcpy as much as possible
 
-compile matcher: `usr/local/bin/nvcc -arch=native -std=c++20 common.cc kernel_skeleton.cc -o matcher`
+compile matcher: `/usr/local/cuda/bin/nvcc -arch=native -std=c++20 common.cc kernel_skeleton.cu -o matcher`
 
 compile gen_sample: `g++ gen_sample.cc -o gen_sample`
 
